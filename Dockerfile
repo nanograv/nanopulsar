@@ -214,8 +214,8 @@ RUN git clone https://github.com/demorest/tempo_utils.git && \
     cd tempo_utils && \
     /bin/bash -c "source /opt/conda/bin/activate python2 && python setup.py install"
 USER jovyan
-#COPY .bashrc /home/jovyan/.bashrc
-#COPY .profile /home/jovyan/.profile
+COPY .bashrc /home/jovyan/.bashrc
+COPY .profile /home/jovyan/.profile
 USER root
 ENV PATH=/opt/pulsar/bin:$PATH
 ENV LD_LIBRARY_PATH=/opt/pulsar/lib:$LD_LIBRARY_PATH
