@@ -1,0 +1,15 @@
+requests_oauthlib
+marshmallow
+ephem
+scikit-sparse
+corner
+numexpr 
+astropy
+runipy
+menpo
+acor 
+line_profiler 
+jplephem
+numdifftools
+numpy==1.12.1
+pdat
