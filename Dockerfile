@@ -216,6 +216,7 @@ RUN git clone https://github.com/demorest/tempo_utils.git && \
 USER jovyan
 COPY .bashrc /home/jovyan/.bashrc
 COPY .profile /home/jovyan/.profile
+COPY .vimrc /home/jovyan/.vimrc
 USER root
 ENV PATH=/opt/pulsar/bin:$PATH
 ENV LD_LIBRARY_PATH=/opt/pulsar/lib:$LD_LIBRARY_PATH
