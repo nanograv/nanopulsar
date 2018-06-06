@@ -128,7 +128,6 @@ ENV NANOGRAVDATA=/nanograv/data
 
 COPY start-singleuser.sh /usr/local/bin/start-singleuser.sh
 COPY notebook-setup.sh /usr/local/bin/notebook-setup.sh
-COPY 00-nanograv.py /home/jovyan/.ipython/profile_default/startup/00-nanograv.py
 
 RUN mkdir /home/jovyan/.local
 RUN ln -sf /home/jovyan/work/custom/lib /home/jovyan/.local/lib
