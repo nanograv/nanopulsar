@@ -26,7 +26,22 @@ RUN apt-get update -y && apt-get install -y \
     libhealpix-cxx0v5 \
     libchealpix-dev \ 
     libreadline-dev \ 
-    libeigen2-dev 
+    libeigen2-dev \ 
+    imagemagick \
+    latex2html \ 
+    gv \
+    tcsh \
+    libsuitesparse-dev \
+    rsync \ 
+    dvipng \
+    libgsl-dev \
+    libopenmpi-dev \
+    libmagickwand-dev \
+    nano \ 
+    vim \ 
+    emacs \
+    less
+
 USER jovyan
 # make calceph
 RUN wget --no-check-certificate -q https://www.imcce.fr/content/medias/recherche/equipes/asd/calceph/calceph-2.3.2.tar.gz && \
@@ -133,11 +148,6 @@ RUN mkdir /home/jovyan/.local
 RUN ln -sf /home/jovyan/work/custom/lib /home/jovyan/.local/lib
 RUN ln -sf /home/jovyan/work/custom/bin /home/jovyan/.local/bin
 
-
-USER root
-RUN apt-get install -y tcsh libsuitesparse-dev rsync dvipng
-USER jovyan
-
 COPY requirements.txt /var/tmp/requirements.txt
 RUN /bin/bash -c "source activate python2 && pip install -r /var/tmp/requirements.txt"
 RUN pip install -r /var/tmp/requirements.txt
@@ -186,7 +196,6 @@ RUN tar xvfz MultiNest_v3.11.tar.gz
 COPY Makefile MultiNest_v3.11/Makefile
 RUN cd MultiNest_v3.11 && make && make libnest3.so && cp libnest3* /usr/lib
 
-RUN yes | apt install libgsl-dev libopenmpi-dev
 RUN bash -c "source activate python2 && git clone https://github.com/LindleyLentati/TempoNest.git && \
               cd TempoNest && ./autogen.sh && CPPFLAGS=\"-I/opt/pulsar/include\" \
                 LDFLAGS=\"-L/opt/pulsar/lib\" ./configure --prefix=/opt/pulsar && cd PolyChord && MPI=0 make \
@@ -197,10 +206,8 @@ COPY tai2tt_bipm2016.clk /opt/pulsar/share/tempo2/clock/tai2tt_bipm2016.clk
 COPY ao2gps.clk /opt/pulsar/share/tempo2/clock/ao2gps.clk
 COPY gbt2gps.clk /opt/pulsar/share/tempo2/clock/gbt2gps.clk
 USER root
-RUN apt install -y libmagickwand-dev
 RUN /bin/bash -c "source /opt/conda/bin/activate python2 && pip install Wand"
 RUN pip install Wand
-RUN apt-get install -y nano vim emacs less
 RUN apt-get clean
 RUN systemctl enable ssh
 RUN mkdir /var/run/sshd
