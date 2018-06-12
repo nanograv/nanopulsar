@@ -194,11 +194,13 @@ RUN cp /opt/pulsar/lib/python2.7/site-packages/* /opt/conda/envs/python2/lib/pyt
 COPY MultiNest_v3.11.tar.gz ./
 RUN tar xvfz MultiNest_v3.11.tar.gz
 COPY Makefile MultiNest_v3.11/Makefile
+COPY Makefile.polychord /var/tmp/Makefile
 RUN cd MultiNest_v3.11 && make && make libnest3.so && cp libnest3* /usr/lib
 
 RUN bash -c "source activate python2 && git clone https://github.com/LindleyLentati/TempoNest.git && \
               cd TempoNest && ./autogen.sh && CPPFLAGS=\"-I/opt/pulsar/include\" \
-                LDFLAGS=\"-L/opt/pulsar/lib\" ./configure --prefix=/opt/pulsar && cd PolyChord && MPI=0 make \
+                LDFLAGS=\"-L/opt/pulsar/lib\" ./configure --prefix=/opt/pulsar && cd PolyChord && \
+                cp /var/tmp/Makefile.polychord && make \
                  && make libchord.so && cp src/libchord* /usr/lib && cd ../ && make && make install"
 
 USER jovyan
