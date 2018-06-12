@@ -40,7 +40,8 @@ RUN apt-get update -y && apt-get install -y \
     nano \ 
     vim \ 
     emacs \
-    less
+    less \
+    gnuplot
 
 USER jovyan
 # make calceph
@@ -200,7 +201,7 @@ RUN cd MultiNest_v3.11 && make && make libnest3.so && cp libnest3* /usr/lib
 RUN bash -c "source activate python2 && git clone https://github.com/LindleyLentati/TempoNest.git && \
               cd TempoNest && ./autogen.sh && CPPFLAGS=\"-I/opt/pulsar/include\" \
                 LDFLAGS=\"-L/opt/pulsar/lib\" ./configure --prefix=/opt/pulsar && cd PolyChord && \
-                cp /var/tmp/Makefile.polychord && make \
+                cp /var/tmp/Makefile.polychord Makefile && make \
                  && make libchord.so && cp src/libchord* /usr/lib && cd ../ && make && make install"
 
 USER jovyan
