@@ -1,0 +1,208 @@
+#!/usr/bin/tclsh
+# \
+exec tclsh "$0" ${1+"$@"}
+set BASE /usr/lib/clig-1.9.11.1
+set VERSION 0.0.0
+set VERDATE 1111-11-11
+########################################################################
+#
+# This file is part of clig, the command line interface generator for
+# C and Tcl.
+#
+# Copyright (C) 1996-2004 Harald Kirsch (clig@geggus.net)
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# $Revision: 1.14 $, $Date: 2005/03/01 09:22:49 $
+########################################################################
+
+## If still $BASE=="|BASE|", clig was not yet installed and [info
+## script] should guide us to the right place
+if {[string match |BASE| $BASE]} {
+  set BASE [file join [file dir [info script]] ..]
+}
+set auto_path [concat $BASE $auto_path]
+
+##
+## Of course we use the clig-library to instrument this very program
+##
+package require clig $VERSION
+namespace import ::clig::\[A-Za-z\]*
+
+## source the files this program is made of
+foreach file {
+  util.tcl genUsage.tcl genStruct.tcl genParse.tcl genDotH.tcl
+  genDotC.tcl genMan.tcl genDefault.tcl genCheckMandatory.tcl
+  genShowOptionValues.tcl
+} {
+  source [file join $BASE tcl $file]
+}
+
+########################################################################
+##
+## GLOBAL VARIABLES:
+##
+## typeMap
+## maps between Declaration names and the type-string used in a
+## particular language.
+set typeMap(C,String) "char*"
+set typeMap(C,Int) "int"
+set typeMap(C,Long) "long"
+set typeMap(C,Float) "float"
+set typeMap(C,Double) "double"
+
+## <option> denotes s.th. like `-v'. The string `--' for <option>
+## denotes the entries of D describing command line arguments not
+## associated with any option (see proc Rest).
+##
+## D(<option>,type) -- type of <option>, i.e. Int, Float, etc.
+## D(<option>,var) -- variable name to be used in generated code
+## D(<option>,usage) -- usage string for <option>
+## D(<option>,mandatory) -- set to 1, if <option> is mandatory
+## D(<option>,default) -- default value(s) for <option>
+## D(<option>,min) -- minimum value of <option>'s arguments
+## D(<option>,max) -- maximum value of <option>'s arguments
+## D(<option>,cmin) -- minimum number of arguments of <option>
+## D(<option>,cmax) -- maximum number of arguments of <option>
+## D(opts) -- list of all options in D
+## D(usage) -- one-line describing specified program
+## D(name) -- name of program, used in generated manual page
+## D(version) -- version of generated interface, used in usage-message
+## D(description) -- description of generated program 
+## D(commandline) -- name of variable where to store the whole command 
+##                   line. 
+## haveMandatory -- set to 1 if any option is mandatory
+## manFile -- name of manual page file to generate
+
+## Program -- the tail of argv0
+set Program [file tail $argv0]
+
+########################################################################
+#
+# Read the spec-file in a rather clean environment. It might be better 
+# to move all my globals into a namespace. However the context of a
+# proc should be similar.
+#
+proc readSpecfile {file} {
+  set ::clig::file $file
+  unset file
+
+  if {[catch {source $::clig::file}]} {
+    global errorInfo
+    regsub {invoked from.*} $errorInfo {} errorInfo
+    puts -nonewline stderr "$errorInfo"
+    exit 1
+  }
+}
+########################################################################
+##
+## Main
+## 
+
+##
+## Of course we declare the parameters of this very program with
+## clig. 
+##
+setSpec ::main
+source [file join $BASE tcl cmdline.cli]
+#parray ::main
+
+##
+## Now run the parser
+##
+set Program [file tail $argv0]
+if {[catch {parseCmdline main $Program $argc $argv} err]} {
+  puts stderr $err
+  exit 1
+}
+
+##
+## Additional tests for the command line
+##
+foreach t $types {
+  if {-1==[lsearch {C tcl man} $t]} {
+    puts stderr \
+	"$Program: type `$t' not supported, use `C' `man' or `tcl'"
+    exit 1
+  }
+}
+
+## 
+## Set default for outprefix if not given on the command line
+##
+if { ![info exist outprefix]} {
+  set outprefix [file rootname $infile]
+} 
+
+##
+## The declarations we find in infile will go into ::D
+##
+setSpec ::D
+set ::D(opts) {}
+readSpecfile $infile
+#parray ::D
+
+##
+## Check if there are mandatory options. This is needed in several
+## code-generation steps.
+##
+set haveMandatory 0
+foreach opt $D(opts) {
+  if {[info exist D($opt,mandatory)]} {
+    set haveMandatory 1
+    break
+  }
+}
+
+##
+## Enforce a few required declarations
+##
+if { ![info exist ::D(usage)] } {
+  puts stderr "$Program: missing `Usage'-command in `$infile'"
+  exit 1
+}
+
+## Now generate the requested code
+foreach t $types {
+  switch $t {
+    C {
+      genDotH $outprefix.h
+      genDotC $outprefix.c
+    }
+    man {
+      if {![info exist ::D(name)]} {
+	set msg {}; append msg \
+	    "$Program: missing `Name' declaration in `$infile' " \
+	    "which is needed to create the manual"
+	puts stderr $msg
+	exit 1
+      }
+      if { ![info exist manFile] } {
+	set manFile $::D(name)$manExt
+      } else {
+	append manFile $manExt
+      }
+      genMan $manFile
+    }
+    tcl {
+      puts stderr "$Program: sorry, type `tcl' not yet implemented"
+    }
+  }
+}
+########################################################################
+
+## Local Variables: ##
+## mode:tcl ##
+## End: ##

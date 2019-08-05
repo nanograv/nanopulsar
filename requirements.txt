@@ -4,6 +4,7 @@ ephem
 scikit-sparse
 corner
 numexpr 
+fitsio==0.9.8
 astropy
 runipy
 menpo
@@ -11,5 +12,5 @@ acor
 line_profiler 
 jplephem
 numdifftools
-numpy==1.12.1
+numpy==1.13.3
 pdat

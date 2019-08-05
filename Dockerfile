@@ -137,6 +137,8 @@ WORKDIR $PSRCHIVE
 RUN /bin/bash -c "source /opt/conda/bin/activate python2; \
     ./bootstrap; \
     ./configure F77=gfortran --prefix=$PSRHOME --enable-shared CFLAGS=\"-fPIC -std=gnu11 -DHAVE_CFITSIO\" CXXFLAGS=\"-std=gnu -DHAVE_CFITSIO\" FFLAGS=\"-fPIC\";\
+    ./packages/epsic.csh;\
+    ./configure F77=gfortran --prefix=$PSRHOME --enable-shared CFLAGS=\"-fPIC -std=gnu11 -DHAVE_CFITSIO\" CXXFLAGS=\"-std=gnu -DHAVE_CFITSIO\" FFLAGS=\"-fPIC\";\
     make && make install && make clean;" 
 RUN cp /opt/pulsar/lib/python2.7/site-packages/* /opt/conda/envs/python2/lib/python2.7/site-packages/
 
@@ -235,5 +237,13 @@ ENV LD_LIBRARY_PATH=/opt/pulsar/lib:$LD_LIBRARY_PATH
 RUN bash -c "source activate python2 && git clone git://git.code.sf.net/p/dspsr/code dspsr && cd dspsr && ./bootstrap && ./configure && make && make install"
 RUN chown -R jovyan /home/jovyan
 ENV GRANT_SUDO=1
+COPY clig /usr/bin/clig
+WORKDIR /usr/lib
+COPY clig.tar.gz ./
+RUN tar xvfz clig.tar.gz
+RUN apt install -y tk
+WORKDIR /home/jovyan
+RUN git clone https://github.com/nategarver-daniels/afr.git
+RUN /bin/bash -c "cd afr && git pull && make && make install"
 WORKDIR /home/jovyan/work
 EXPOSE 22
